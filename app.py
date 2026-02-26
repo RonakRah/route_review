@@ -6,8 +6,8 @@ import pandas as pd
 # ----------------------------
 # Page setup
 # ----------------------------
-st.set_page_config(page_title="CSV Review (Download Accepted)", layout="wide")
-st.title("CSV Review (Download Accepted)")
+st.set_page_config(page_title="Route Review", layout="wide")
+st.title("Route Review")
 
 st.write(
     "Upload a CSV with columns **departure_pos**, **arrival_pos**, **from_name**, **to_name**.\n\n"
