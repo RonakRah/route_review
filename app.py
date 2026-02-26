@@ -10,7 +10,7 @@ st.set_page_config(page_title="CSV Review (Download Accepted)", layout="wide")
 st.title("CSV Review (Download Accepted)")
 
 st.write(
-    "Upload a CSV with columns **departure_pos**, **arrival_pos**, **Status**.\n\n"
+    "Upload a CSV with columns **departure_pos**, **arrival_pos**, **from_name**, **to_name**.\n\n"
     "Click **Accept** or **Reject** per row. The **Final status** updates immediately.\n"
     "When finished, download the accepted rows as CSV."
 )
@@ -30,7 +30,7 @@ if "filename" not in st.session_state:
 # ----------------------------
 uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
 
-REQUIRED_COLS = {"departure_pos", "arrival_pos", "Status"}
+REQUIRED_COLS = {"departure_pos", "arrival_pos", "from_name", "to_name"}
 
 def load_df(file) -> pd.DataFrame:
     d = pd.read_csv(file)
@@ -39,6 +39,7 @@ def load_df(file) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing required columns: {', '.join(sorted(missing))}")
 
+    # stable id + decision column
     d.insert(0, "row_id", range(1, len(d) + 1))
     d["decision"] = "pending"  # pending/accepted/rejected
     return d
@@ -99,12 +100,13 @@ header_style = """
     margin-bottom:6px;
 ">
     <div style="display:grid;
-                grid-template-columns:0.8fr 2.2fr 2.2fr 2fr 1.6fr 2.2fr;
+                grid-template-columns:0.8fr 1.8fr 1.8fr 2fr 2fr 1.6fr 2.2fr;
                 gap:8px;">
         <div>Row</div>
         <div>Departure</div>
         <div>Arrival</div>
-        <div>Status</div>
+        <div>From</div>
+        <div>To</div>
         <div>Final status</div>
         <div>Actions</div>
     </div>
@@ -116,15 +118,16 @@ st.markdown(header_style, unsafe_allow_html=True)
 # Table Rows
 # ----------------------------
 for i, row in df.iterrows():
-    cols = st.columns([0.8, 2.2, 2.2, 2.0, 1.6, 2.2])
+    cols = st.columns([0.8, 1.8, 1.8, 2.0, 2.0, 1.6, 2.2])
 
     cols[0].write(int(row["row_id"]))
     cols[1].markdown(big_id(row["departure_pos"]), unsafe_allow_html=True)
     cols[2].markdown(big_id(row["arrival_pos"]), unsafe_allow_html=True)
-    cols[3].write(str(row["Status"]))
-    cols[4].markdown(decision_badge(row["decision"]), unsafe_allow_html=True)
+    cols[3].write(str(row["from_name"]))
+    cols[4].write(str(row["to_name"]))
+    cols[5].markdown(decision_badge(row["decision"]), unsafe_allow_html=True)
 
-    a1, a2 = cols[5].columns(2)
+    a1, a2 = cols[6].columns(2)
     if a1.button("✅ Accept", key=f"accept_{row['row_id']}"):
         df.at[i, "decision"] = "accepted"
         st.session_state.df = df
@@ -138,7 +141,7 @@ for i, row in df.iterrows():
 st.divider()
 
 # ----------------------------
-# Download accepted rows (instead of Google Sheets for now)
+# Download accepted rows
 # ----------------------------
 st.subheader("Finish → Download accepted rows as CSV")
 
